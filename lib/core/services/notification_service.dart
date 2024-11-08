@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart' as perm;
 
@@ -9,8 +8,8 @@ class NotificationService {
   static Future<void> initialize() async {
     const channel = AndroidNotificationChannel(
       'push_channel',
-      'MY CHANNEL FOR PUSH',
-      description: 'This channel is used for push messages',
+      'Push Notifications',
+      description: 'This channel is used for push notifications',
       importance: Importance.max,
     );
 
@@ -22,23 +21,25 @@ class NotificationService {
     await perm.Permission.notification.request();
   }
 
-  static Future<void> showNotification(Map<dynamic, dynamic> message) async {
-    final title = message["data"]["title"] ?? "No Title";
-    final body = message["data"]["body"] ?? "No Content";
+  static Future<void> showNotification(String title, String body) async {
+    const androidPlatformChannelSpecifics = AndroidNotificationDetails(
+      'push_channel',
+      'Push Notifications',
+      channelDescription: 'This channel is used for push notifications',
+      importance: Importance.max,
+      priority: Priority.high,
+      showWhen: false,
+    );
+
+    const platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+    );
 
     await _flutterLocalNotificationsPlugin.show(
-      8888,
+      0, // Notification ID
       title,
       body,
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'push_channel',
-          'MY CHANNEL FOR PUSH',
-          icon: 'launch_background',
-          importance: Importance.max,
-          priority: Priority.high,
-        ),
-      ),
+      platformChannelSpecifics,
     );
   }
 }

@@ -1,12 +1,12 @@
 import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_pushed_messaging/flutter_pushed_messaging.dart';
-import 'package:pushed_app/main.dart';
+import 'package:pushed_app/core/services/notification_service.dart';
+
 import 'package:pushed_app/message_database.dart';
+import 'all_messages_page.dart';
 
 class NotificationPage extends StatefulWidget {
   const NotificationPage({super.key});
@@ -42,9 +42,9 @@ class _NotificationPageState extends State<NotificationPage> {
       });
 
       // Show local notification with the received message
-      await showLocalNotification(_title, _body);
+      await NotificationService.showNotification(_title, _body);
 
-      // Optionally, save the message to the database
+      // Save the message to the database
       await _database.insertMessage(_title, _body);
     });
 
@@ -74,11 +74,13 @@ class _NotificationPageState extends State<NotificationPage> {
             _buildButton("Copy Token", () async {
               await Clipboard.setData(ClipboardData(text: _token));
             }),
-            _buildButton("Show All Messages", () async {
-              final savedMessages = await _database.getAllMessages();
-              for (var message in savedMessages) {
-                print("Saved Message: ${message.title} - ${message.body}");
-              }
+            _buildButton("Show All Messages", () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AllMessagesPage(database: _database),
+                ),
+              );
             }),
             if (Platform.isAndroid)
               _buildButton("Reconnect", FlutterPushedMessaging.reconnect),
@@ -97,26 +99,6 @@ class _NotificationPageState extends State<NotificationPage> {
     return TextButton(
       onPressed: onPressed,
       child: Text(text),
-    );
-  }
-
-  Future<void> showLocalNotification(String title, String body) async {
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails(
-      'push_channel', // id
-      'Push Notifications', // title
-      channelDescription: 'This channel is used for push notifications',
-      importance: Importance.max,
-      priority: Priority.high,
-      showWhen: false,
-    );
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
-    await flutterLocalNotificationsPlugin.show(
-      0, // notification ID
-      title,
-      body,
-      platformChannelSpecifics,
     );
   }
 }
